@@ -1,0 +1,40 @@
+﻿body /* The body of every page */
+{
+    font-size:25px; /* Legacy browser support */
+    font-size:1.3vw; /* Assign a dynamic text size */
+    margin:0;
+    padding:0;
+    /*overflow-x:hidden;*/ /* Stop the broswer from allowing horizontal folder */
+    font-family:"Calibri" !important; /* Assign font */
+    }
+div.main-table
+{
+    top:0px;
+    height:auto; 
+    padding:0;
+    margin:0;
+    }
+table.myTable 
+{
+    left:0;
+    border-spacing:0;
+    width:100%;
+    border-collapse:collapse;
+    margin:0;
+    padding:0;
+    }
+table.myTable td, table.myTable th
+    {
+        border:thin solid #2F4F4F;
+        padding:0;
+        outline: none;
+        text-align:center;
+    }
+@media all (min--moz-device-pixel-ratio: 1.5), (-o-min-device-pixel-ratio: 1.5), (-webkit-min-device-pixel-ratio: 1.5), (min-device-pixel-ratio: 1.5), (min-resolution: 144dpi), (min-resolution: 1.5dppx)
+{
+    table.myTable td, table.myTable th
+    {
+        border:2px solid #2F4F4F;
+        margin-bottom: -1px;
+    }
+}
