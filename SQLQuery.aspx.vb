@@ -13,7 +13,7 @@ Public Module SamplingAssistant
     Function sqlTable(ByVal tTable1 As Table, queryString1 As NameValueCollection) As Table
         Dim count As New Integer
         Dim queryString As New NameValueCollection(queryString1)
-        If Integer.TryParse(queryString("Count"), count) Then Else count = 50 'Get the Sample Count from the request String and try to parse it to a double or else set count = 50
+        If Integer.TryParse(queryString("Count"), count) Then Else count = 50 ' Defualt count to 50 if no value is specified
         If queryString.AllKeys.Contains("Count") Then queryString.Remove("Count")
 
         'Connect to the SQL Server that contains all the NOVA Sample information
@@ -63,18 +63,31 @@ Public Module SamplingAssistant
             End If
         Next whereClause
 
+        Dim params As New Dictionary(Of String, String)
         Dim injection As New List(Of String)
         For Each whereClause As String In queryString.AllKeys
-            Dim param As String = Strings.Replace(rgx.Replace(whereClause, ""), " ", "_")
+            Dim param As String = "@" + Strings.Replace(rgx.Replace(whereClause, ""), " ", "_")
             Dim val As String = queryString(whereClause)
             Dim comOperator As String
             If val.Contains("|") Then
                 Dim comOperator1 As String() = Strings.Split(val, "|")
-                comOperator = Strings.Left(comOperator1(0), 4)
+                comOperator = " " + Strings.Left(comOperator1(0), 2) + " "
+                params.Add(param, Strings.Right(val, val.Length - val.IndexOf("|") - 1))
+            ElseIf val.Contains(",") Then
+                comOperator = " IN "
+                Dim vals As String() = Strings.Split(val, ",")
+                Dim paramList As New List(Of String)
+                For i As Integer = 0 To vals.Count - 1
+                    Dim paramName As String = "@" + param + i.ToString
+                    params.Add(paramName, vals(i).Trim)
+                    paramList.Add(paramName)
+                Next i
+                param = "(" + Strings.Join(paramList.ToArray, ",") + ")"
             Else
-                comOperator = "="
+                comOperator = " = "
+                params.Add(param, val)
             End If
-            injection.Add("[" + rgx.Replace(whereClause, "") + "] " + comOperator + " @" + param)
+            injection.Add("[" + rgx.Replace(whereClause, "") + "]" + comOperator + param)
 
         Next whereClause
 
@@ -84,18 +97,26 @@ Public Module SamplingAssistant
         Dim sqlCmd As New SqlClient.SqlCommand(sqlText.ToString, sqlCon)
         sqlCmd.Parameters.Add("@Count", SqlDbType.Int, 5).Value = count
 
-        For Each WhereClause As String In queryString.AllKeys
-            Dim param As String = Strings.Replace(WhereClause, " ", "_")
-            If queryString(WhereClause).Contains("|") Then
-                sqlCmd.Parameters.Add("@" + param, SqlDbType.Decimal, 30).Value = queryString(WhereClause).Split(New String() {"|"}, StringSplitOptions.None)(1)
+        'For Each WhereClause As String In queryString.AllKeys
+        '    Dim param As String = Strings.Replace(WhereClause, " ", "_")
+        '    If queryString(WhereClause).Contains("|") Then
+        '        sqlCmd.Parameters.Add("@" + param, SqlDbType.Decimal, 30).Value = queryString(WhereClause).Split(New String() {"|"}, StringSplitOptions.None)(1)
+        '    Else
+        '        sqlCmd.Parameters.Add("@" + param, SqlDbType.VarChar, 30).Value = queryString(WhereClause)
+        '    End If
+        '    Debug.Print(sqlCmd.Parameters("@" + param).Value.ToString)
+        'Next WhereClause
+
+        For Each param As KeyValuePair(Of String, String) In params
+            If Double.TryParse(param.Value, New Double) Then
+                sqlCmd.Parameters.Add(param.Key, SqlDbType.Decimal, 30).Value = param.Value
             Else
-                sqlCmd.Parameters.Add("@" + param, SqlDbType.VarChar, 30).Value = queryString(WhereClause)
+                sqlCmd.Parameters.Add(param.Key, SqlDbType.VarChar, 30).Value = param.Value
             End If
-            Debug.Print(sqlCmd.Parameters("@" + param).Value.ToString)
-        Next WhereClause
+            Debug.Print(sqlCmd.Parameters(param.Key).Value.ToString)
+        Next param
 
         Debug.Print(sqlCmd.CommandText.ToString)
-
 
         Dim sqlReader As System.Data.SqlClient.SqlDataReader = sqlCmd.ExecuteReader()
 
