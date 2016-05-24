@@ -41,11 +41,10 @@ function fixedheaders() {
             width = headercells[i].clientWidth - padding;
 
             $(fixedheadercells[i]).css({
-                "position": "relative",
                 "width": width,
                 "height": style.height,
                 "background": "rgba(255,255,255,0.9)"
-            });;
+            });
         }
         header.css({
             "visibility": "hidden"
