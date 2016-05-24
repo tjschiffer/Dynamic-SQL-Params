@@ -97,16 +97,6 @@ Public Module SamplingAssistant
         Dim sqlCmd As New SqlClient.SqlCommand(sqlText.ToString, sqlCon)
         sqlCmd.Parameters.Add("@Count", SqlDbType.Int, 5).Value = count
 
-        'For Each WhereClause As String In queryString.AllKeys
-        '    Dim param As String = Strings.Replace(WhereClause, " ", "_")
-        '    If queryString(WhereClause).Contains("|") Then
-        '        sqlCmd.Parameters.Add("@" + param, SqlDbType.Decimal, 30).Value = queryString(WhereClause).Split(New String() {"|"}, StringSplitOptions.None)(1)
-        '    Else
-        '        sqlCmd.Parameters.Add("@" + param, SqlDbType.VarChar, 30).Value = queryString(WhereClause)
-        '    End If
-        '    Debug.Print(sqlCmd.Parameters("@" + param).Value.ToString)
-        'Next WhereClause
-
         For Each param As KeyValuePair(Of String, String) In params
             If Double.TryParse(param.Value, New Double) Then
                 sqlCmd.Parameters.Add(param.Key, SqlDbType.Decimal, 30).Value = param.Value
